@@ -248,23 +248,61 @@ Concrètement, la PKI utilise la cryptographie asymétrique basée sur une paire
 
 18. Capturer un `handshake TLS`
 
+<img width="986" height="438" alt="image" src="https://github.com/user-attachments/assets/d0b55657-d58c-444b-99f7-61b645f1a32c" />
+
+---
+
 19. Qu’est-ce qu’une autorité de certification (`AC`) racine ? Qu'est qu'une `AC intermediaire` ?
 
-20. Connectez-vous sur `taisen.fr` et affichez la `chaine de confiance` du certificat
+--> Une autorité de certification (AC) racine est l’autorité la plus élevée et la plus fiable dans la hiérarchie des certificats numériques. Elle est auto-signée, c’est-à-dire qu’elle signe elle-même son propre certificat, attestant ainsi sa propre identité. Ce certificat racine est préinstallé dans les navigateurs web et systèmes d’exploitation, ce qui permet de leur faire automatiquement confiance. Les AC racines délivrent des certificats intermédiaires ou directement des certificats utilisateur, mais pour des raisons de sécurité, elles émettent rarement des certificats finaux directement.
 
-21. Capturer une authentification `Kerberos` (mettre en place le service si nécessaire), identifier l'`AS_REQ`, `AS_REP` et les messages suivants.
+--> Une autorité de certification intermédiaire est une AC située entre l’AC racine et les certificats finaux (utilisateurs ou serveurs). Elle est signée par l’AC racine ou par une autre AC intermédiaire supérieure, et elle a pour rôle de délégué l’émission des certificats. Cela permet de créer une chaîne de confiance : le certificat final est émis par une AC intermédiaire, qui elle-même est signée par l’AC racine. Cette architecture ajoute une couche de sécurité, car la clé privée de l’AC racine est protégée hors ligne, et en cas de compromission d’une AC intermédiaire, les conséquences sont contenues.
 
-22. Capturer une `authentification RDP` (mettre en place le service si nécessaire), quel est le protocole d'authentification capturé ?
+---
 
-23. Quelles sont les attaques connues sur `NetLM` ?
+21. Connectez-vous sur `taisen.fr` et affichez la `chaine de confiance` du certificat
 
-24. Capturer une `authentification WinRM` (Vous pouvez utiliser EvilWinRM si nécessaire côté client.), quel est le protocole d'authentification capturé ?
+<img width="935" height="696" alt="certificat_autorisation" src="https://github.com/user-attachments/assets/03ca2f73-0b02-44a4-8681-b9cf8dacc83f" />
 
-25. Capturer une `authentification SSH` ou SFTP (mettre en place le service si nécessaire)
+---
 
-26. Intercepter un `fichier au travers du protocole SMB`
+22. Capturer une authentification `Kerberos` (mettre en place le service si nécessaire), identifier l'`AS_REQ`, `AS_REP` et les messages suivants.
 
-27. Comment proteger l'`authenticité` et la `confidentialité` d'un partage SMB ?
+23. Capturer une `authentification RDP` (mettre en place le service si nécessaire), quel est le protocole d'authentification capturé ?
+
+24. Quelles sont les attaques connues sur `NetLM` ?
+
+Les attaques connues sur le protocole d’authentification NetLM/NTLM sont principalement les suivantes :
+
+--> Attaque par relais NTLM (NTLM Relay)
+
+  - L’attaquant intercepte une requête d’authentification NTLM d’un utilisateur légitime et relaie cette authentification vers un serveur cible sans connaître le mot de passe.
+
+  - Cette attaque permet à l’attaquant de se faire passer pour l’utilisateur, obtenir un accès non autorisé et exécuter des actions avec ses privilèges.
+
+  - Des variantes comme l’attaque PetitPotam exploitent des failles dans les services pour forcer une authentification NTLM sur des serveurs critiques (comme Active Directory Certificate Services) et obtenir un contrôle étendu sur le domaine.
+
+--> Attaques "Pass-the-Hash" (PtH)
+
+   - Extraction des hachages NTLM depuis la mémoire des machines (avec des outils comme Mimikatz), puis utilisation directe de ces hachages pour s’authentifier ailleurs sans connaître le mot de passe en clair.
+
+--> Exploitation des vulnérabilités dans la gestion NTLM
+
+   - Par exemple, une vulnérabilité zero-day récente dans Windows pouvait forcer la machine victime à envoyer ses hachages NTLM à un serveur malveillant simplement en affichant un fichier malveillant dans l’explorateur.
+
+--> Man-in-the-Middle (MitM) et attaques de coercition
+
+   - Techniques permettant à un attaquant sur le réseau local de forcer une réauthentification NTLM, par empoisonnement ARP, DNS spoofing, ou exploitation d’autres services vulnérables liés à NTLM.
+
+---
+
+25. Capturer une `authentification WinRM` (Vous pouvez utiliser EvilWinRM si nécessaire côté client.), quel est le protocole d'authentification capturé ?
+
+26. Capturer une `authentification SSH` ou SFTP (mettre en place le service si nécessaire)
+
+27. Intercepter un `fichier au travers du protocole SMB`
+
+28. Comment proteger l'`authenticité` et la `confidentialité` d'un partage SMB ?
 
 > [!TIP]
 > Bonus : **Déchiffrer le traffic TLS** en important la clé privée du certificat dans Wireshark et **reconstituer le fichier** qui à transité sur le réseau à l'aide de Wireshark
