@@ -73,10 +73,21 @@ en place.
 
 <img width="792" height="355" alt="Hash_W10" src="https://github.com/user-attachments/assets/2eac63b6-5f08-450d-9b72-13a34e2304ab" />
 
-
 #### Machine Windows Server 2022 (Server AD) → 
 
 <img width="776" height="386" alt="hash_WServer22" src="https://github.com/user-attachments/assets/b6b66296-2150-44f4-907f-1580bd46d48b" />
+
+Pour trouver le hash d’un fichier dans PowerShell :
+
+```
+Get-FileHash -Algorithm SHA256 -Path "chemin\vers\ton\fichier"
+```
+
+   - Get-FileHash : cmdlet qui calcule la valeur de hachage d’un fichier.
+
+   - Algorithm SHA256 : spécifie l’algorithme de hachage (ici SHA256, mais tu peux aussi utiliser MD5, SHA1, SHA384, SHA512).
+
+   - Path "chemin\vers\ton\fichier" : indique le chemin complet ou relatif du fichier dont tu veux calculer le hash.
 
 ## **Mises à jour**
 
