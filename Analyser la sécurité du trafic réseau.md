@@ -244,6 +244,18 @@ Concrètement, la PKI utilise la cryptographie asymétrique basée sur une paire
 
 16. Capturer un `mot de passe` HTTP via le projet VulnerableLightApp.
 
+Requête HTTP sur Swagger -->
+
+<img width="1024" height="768" alt="requette_HTTP_Swagger_VulnerableLightApp" src="https://github.com/user-attachments/assets/cd98f33d-060a-46bb-b705-8b20ec6727c8" />
+
+<BVR><BVR>
+
+Capture Login/Mot de Passe avec Wireshark -->
+
+<img width="1024" height="768" alt="Capture_Login_MP" src="https://github.com/user-attachments/assets/e91f473c-bbd8-4866-9335-eb74751c48b2" />
+
+---
+
 17. Comment mettre en place la `confidentialité` pour ce service ?
 
 18. Capturer un `handshake TLS`
