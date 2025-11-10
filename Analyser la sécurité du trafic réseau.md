@@ -258,6 +258,8 @@ Capture Login/Mot de Passe avec Wireshark -->
 
 17. Comment mettre en place la `confidentialité` pour ce service ?
 
+Pour garantir la confidentialité du service HTTP de VulnerableLightApp, il est essentiel de passer à HTTPS en installant un certificat SSL/TLS. Cela chiffre toutes les communications et empêche l’interception des mots de passe.
+
 18. Capturer un `handshake TLS`
 
 <img width="986" height="438" alt="image" src="https://github.com/user-attachments/assets/d0b55657-d58c-444b-99f7-61b645f1a32c" />
@@ -280,8 +282,23 @@ Capture Login/Mot de Passe avec Wireshark -->
 
 22. Capturer une authentification `Kerberos` (mettre en place le service si nécessaire), identifier l'`AS_REQ`, `AS_REP` et les messages suivants.
 
+<img width="800" height="600" alt="Authenti_Kerberos" src="https://github.com/user-attachments/assets/8fd69188-810a-4ee6-82c5-8aa55e4d19b9" />
+
+<img width="800" height="600" alt="AS_REQ" src="https://github.com/user-attachments/assets/9f86b959-319f-4d81-acd2-1b1a4881e8da" />
+
+<img width="800" height="600" alt="AS_REP" src="https://github.com/user-attachments/assets/e5a4e990-9742-4952-93ea-5f1f3df4fa49" />
+
+---
+
+
 23. Capturer une `authentification RDP` (mettre en place le service si nécessaire), quel est le protocole d'authentification capturé ?
 
+<img width="475" height="276" alt="rdp2" src="https://github.com/user-attachments/assets/fc42a970-7f56-43b8-9352-4aba868ff427" />
+
+<img width="800" height="600" alt="rdp4" src="https://github.com/user-attachments/assets/f120eafa-8056-48c4-98e5-4655fa733722" />
+
+ --> Le protocole d’authentification capturé est TLS 1.2 pour la sécurité de la session RDP.
+ 
 24. Quelles sont les attaques connues sur `NetLM` ?
 
 Les attaques connues sur le protocole d’authentification NetLM/NTLM sont principalement les suivantes :
