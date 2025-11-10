@@ -331,11 +331,15 @@ Les attaques connues sur le protocole d’authentification NetLM/NTLM sont princ
 
 --> WinRM utilise NTLM pour l’authentification.
 
+---
+
 26. Capturer une `authentification SSH` ou SFTP (mettre en place le service si nécessaire)
 
 <img width="1152" height="864" alt="ssh" src="https://github.com/user-attachments/assets/2c475b65-50e9-4cbc-8076-22d0d09d2f41" />
 
 <img width="800" height="600" alt="ssh2" src="https://github.com/user-attachments/assets/8ed82697-ef7f-40da-a243-fd4fd032356f" />
+
+---
 
 27. Intercepter un `fichier au travers du protocole SMB`
     
@@ -343,7 +347,17 @@ Les attaques connues sur le protocole d’authentification NetLM/NTLM sont princ
 
 <img width="800" height="600" alt="smb2" src="https://github.com/user-attachments/assets/8365df68-08c4-4efb-9e8e-07945744b4b7" />
 
-29. Comment proteger l'`authenticité` et la `confidentialité` d'un partage SMB ?
+---
 
+28. Comment proteger l'`authenticité` et la `confidentialité` d'un partage SMB ?
+
+En activant le chiffrement SMB, la signature SMB, la limitation du taux d’authentification, et configure correctement les autorisations pour protéger l’authenticité et la confidentialité de ton partage SMB.
+ - Le chiffrement SMB protège la confidentialité des données en transit.
+ - La signature SMB garantit l’authenticité des paquets et empêche la falsification.
+ - La limitation du taux d’authentification protège contre les attaques par force brute.
+ - La configuration des autorisations limite l’accès aux utilisateurs autorisés.
+
+   ---
+   
 > [!TIP]
 > Bonus : **Déchiffrer le traffic TLS** en important la clé privée du certificat dans Wireshark et **reconstituer le fichier** qui à transité sur le réseau à l'aide de Wireshark
