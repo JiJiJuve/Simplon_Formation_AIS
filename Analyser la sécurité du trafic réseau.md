@@ -327,11 +327,23 @@ Les attaques connues sur le protocole d’authentification NetLM/NTLM sont princ
 
 25. Capturer une `authentification WinRM` (Vous pouvez utiliser EvilWinRM si nécessaire côté client.), quel est le protocole d'authentification capturé ?
 
+<img width="800" height="600" alt="winRM" src="https://github.com/user-attachments/assets/df5d46bc-a1fd-4e29-985b-00903bcdd673" />
+
+--> WinRM utilise NTLM pour l’authentification.
+
 26. Capturer une `authentification SSH` ou SFTP (mettre en place le service si nécessaire)
 
-27. Intercepter un `fichier au travers du protocole SMB`
+<img width="1152" height="864" alt="ssh" src="https://github.com/user-attachments/assets/2c475b65-50e9-4cbc-8076-22d0d09d2f41" />
 
-28. Comment proteger l'`authenticité` et la `confidentialité` d'un partage SMB ?
+<img width="800" height="600" alt="ssh2" src="https://github.com/user-attachments/assets/8ed82697-ef7f-40da-a243-fd4fd032356f" />
+
+27. Intercepter un `fichier au travers du protocole SMB`
+    
+<img width="1152" height="864" alt="smb" src="https://github.com/user-attachments/assets/e83b096f-f62a-48f8-80d5-954d5024c7ac" />
+
+<img width="800" height="600" alt="smb2" src="https://github.com/user-attachments/assets/8365df68-08c4-4efb-9e8e-07945744b4b7" />
+
+29. Comment proteger l'`authenticité` et la `confidentialité` d'un partage SMB ?
 
 > [!TIP]
 > Bonus : **Déchiffrer le traffic TLS** en important la clé privée du certificat dans Wireshark et **reconstituer le fichier** qui à transité sur le réseau à l'aide de Wireshark
