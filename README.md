@@ -11,7 +11,6 @@ L’objectif est de mettre en œuvre les principaux mécanismes de redondance et
 
 ## Sommaire
 
-- [Administration de l'infrastructure LAN & Haute disponibilité](#administration-de-linfrastructure-lan--haute-disponibilité)
   - [Objectifs du projet](#objectifs-du-projet)
   - [Topologie et technologies utilisées](#topologie-et-technologies-utilisées)
   - [Plan d'adressage IP](#plan-dadressage-ip)
@@ -23,6 +22,7 @@ L’objectif est de mettre en œuvre les principaux mécanismes de redondance et
     - [Passerelles L3, HSRP et relais DHCP](#passerelles-l3-hsrp-et-relais-dhcp)
     - [Service DHCP centralisé](#service-dhcp-centralisé)
     - [DNS et serveur web interne](#dns-et-serveur-web-interne)
+    - [Scénarios de tests réalisés](#scénarios-de-tests-réalisés)
    
 
 ## Objectifs du projet
@@ -73,17 +73,17 @@ L’objectif est de mettre en œuvre les principaux mécanismes de redondance et
 
 Les extraits suivants illustrent la mise en œuvre des principaux mécanismes de haute disponibilité et de services d’infrastructure dans ce projet : HSRP, EtherChannel, routage OSPF, DHCP, etc.
 
-### Vérification HSRP – routeur actif (SW-CORE-1)
+### Vérification HSRP – Switch L3 actif (SW-CORE-1)
 
 
 <img width="548" height="98" alt="HSRP_Active" src="https://github.com/user-attachments/assets/81133820-d90a-4776-b68a-bf13a3f20cd4" />
 
 
-- Ce cœur de réseau joue le rôle de routeur **actif** pour les VLAN 10/20/30, et assure la passerelle par défaut via la VIP 10.0.x.254.
+- Ce cœur de réseau joue le rôle de switch L3 actif pour les VLAN 10/20/30, et assure la passerelle par défaut via la VIP 10.0.x.254.
 
 ---
 
-### Vérification HSRP – routeur de secours (SW-CORE-2)
+### Vérification HSRP – Switch L3 de secours (SW-CORE-2)
 
 
 <img width="544" height="96" alt="HSRP_Standby" src="https://github.com/user-attachments/assets/145196ca-eaee-481a-bd7a-94bef17034ea" />
@@ -148,6 +148,30 @@ Les extraits suivants illustrent la mise en œuvre des principaux mécanismes de
 <img width="671" height="329" alt="server_dns_web_nom" src="https://github.com/user-attachments/assets/35ec414f-9ef3-43e3-8b1b-b15488e99395" />
 
 
+---
 
+## Scénarios de tests réalisés
+
+- Bascule HSRP : après l’arrêt de SW-CORE-1 (switch L3 initialement actif), SW-CORE-2 devient actif sur tous les VLAN tout en conservant la même VIP, ce qui maintient la connectivité des clients.
+
+- SW-CORE-1 éteint :
+
+
+<img width="917" height="710" alt="Test_hsrp_SW1_OFF" src="https://github.com/user-attachments/assets/af411a74-c0a1-46aa-b132-1e26cb42da62" />
+
+
+- SW-CORE-2 devenu actif HSRP :
+
+
+<img width="541" height="94" alt="Test_hsrp" src="https://github.com/user-attachments/assets/f21fda1a-81ae-4d5d-ab8f-5012889ced26" />
+
+
+- DNS / Web : depuis un poste client, accès réussi au serveur web interne d’abord par adresse IP, puis par nom (résolution DNS) comme illustré dans la section « DNS et serveur web interne ».
+
+
+- Routage inter-VLAN : test de ping entre deux PC situés dans des VLAN différents (par exemple un PC en VLAN 20 et un PC en VLAN 30), validant le rôle des switchs L3 comme passerelles routées entre les sous-réseaux.
+
+
+<img width="418" height="323" alt="ping-intervlan" src="https://github.com/user-attachments/assets/62647700-a8a2-49af-b8f1-b0c3da5a57dc" />
 
 
