@@ -135,8 +135,8 @@ Les extraits suivants illustrent la mise en œuvre des principaux mécanismes de
 
 ### DNS et serveur web interne
 
-Le serveur DNS (10.0.10.3) résout le nom du serveur web interne afin que les clients accèdent au site par nom et non uniquement par adresse IP.  
-Le serveur web héberge une page de test permettant de valider la connectivité applicative depuis les différents VLAN.
+- Le serveur DNS (10.0.10.3) résout le nom du serveur web interne afin que les clients accèdent au site par nom et non uniquement par adresse IP.  
+- Le serveur web héberge une page de test permettant de valider la connectivité applicative depuis les différents VLAN.
 
 
 <img width="660" height="357" alt="server_DNS" src="https://github.com/user-attachments/assets/8e610db0-c634-4062-b4a9-feba0ad05aad" />
