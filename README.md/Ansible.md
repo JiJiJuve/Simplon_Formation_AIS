@@ -472,3 +472,89 @@ Ansible décrit un **état cible** et remet la machine dans cet état à chaque 
   - le déploiement d’un site statique.
 
 Ce TP est mon **premier pas sérieux avec Ansible** et l’automatisation d’infrastructures dans le cadre de la formation AIS (Simplon).
+
+Parfait, on ajoute une **section bonus Vault** à la fin de ton README détaillé, sans casser ce que tu as déjà.
+
+Tu peux coller ce bloc **après la section 13** (“Ce que ce TP m’a appris”) de ton README actuel.
+
+
+---
+
+## 14. Bonus – Ansible Vault (optionnel)
+
+Pour ce TP, je n’ai pas besoin de stocker de mot de passe en clair dans les fichiers :  
+j’utilise `--ask-pass` et `--ask-become-pass`, donc Ansible me demande les mots de passe au moment de l’exécution.  
+
+Pour aller plus loin, j’ai testé **Ansible Vault** afin de voir comment chiffrer un mot de passe sudo dans un fichier de variables.
+
+### 14.1. Création d’un fichier de secrets chiffré
+
+Dans le dossier de travail Ansible (`~/ansible-c2`) :
+
+```bash
+mkdir -p vars
+ansible-vault create vars/secrets.yml
+```
+
+Ansible demande un **mot de passe de coffre** (vault password), puis ouvre un éditeur.  
+Je renseigne par exemple :
+
+```yaml
+ansible_become_password: "MonMotDePasseSudo"
+```
+
+En enregistrant et fermant, le fichier `vars/secrets.yml` est **chiffré** : on ne voit plus le mot de passe en clair.
+
+### 14.2. Utilisation du vault dans un playbook
+
+Exemple avec le playbook `1-update-os.yml` :
+
+```yaml
+***
+- name: Update OS on targets (Debian)
+  hosts: targets
+  become: true
+
+  vars_files:
+    - vars/secrets.yml
+
+  tasks:
+    - name: Update APT cache and upgrade packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+```
+
+Ici :
+- `vars_files` charge le fichier `vars/secrets.yml` (chiffré).
+- La variable `ansible_become_password` est automatiquement utilisée par Ansible comme mot de passe sudo.
+
+### 14.3. Exécution avec Vault
+
+Pour lancer ce playbook avec Vault :
+
+```bash
+ansible-playbook -i inventory.ini 1-update-os.yml --ask-vault-pass
+```
+
+- `--ask-vault-pass` : Ansible demande le **mot de passe du coffre** pour déchiffrer `vars/secrets.yml`.
+
+Dans ce mode :
+- Le mot de passe sudo n’apparaît **dans aucun fichier en clair**.
+- Il est stocké dans un fichier chiffré (`vars/secrets.yml`), et seulement déchiffré en mémoire le temps de l’exécution du playbook.
+
+---
+
+### 14.4. Intérêt de Vault pour la suite
+
+Sur ce TP simple, Vault n’est pas indispensable, mais il devient très utile quand :
+
+- On commence à gérer plusieurs serveurs de production avec des mots de passe différents.
+- On veut **committer le code Ansible sur Git** sans exposer de secrets.
+- On doit stocker d’autres informations sensibles : mots de passe de bases de données, tokens API, etc.
+
+Cette section me permet surtout de montrer que je sais :
+- Créer un fichier de secrets chiffré avec `ansible-vault`.
+- Charger ces secrets dans un playbook avec `vars_files`.
+- Lancer un playbook avec `--ask-vault-pass` pour protéger les mots de passe.
+
