@@ -1,107 +1,210 @@
-# TP Ansible – Mes premiers pas (Debian 13)
+# TP Ansible C2 – Debian 13.1.0
 
 Ce fichier fait partie de ma formation **AIS (Administrateur d’Infrastructures Sécurisées)** chez Simplon.  
-Il décrit mon premier TP d’automatisation avec **Ansible** sur Debian 13 : partir d’une VM “vierge” et, étape par étape, la transformer en serveur à jour, sécurisé en SSH et capable de servir un site web statique.
+Il décrit mon premier TP d’automatisation avec **Ansible** sur Debian 13.1.0 : partir d’une VM “vierge” et, étape par étape, la transformer en serveur à jour, sécurisé en SSH et capable de servir un site web statique.
 
 ---
 
-## 1. Contexte et objectif
+## 0. Objectif du TP
 
-- Mettre en place un **contrôleur Ansible (C2)** sur Debian.
-- Administrer une **cible Debian** à distance via SSH.
-- Automatiser 3 grands types de tâches avec des playbooks :
-  1. Mise à jour du système.
-  2. Gestion des comptes / sudo / SSH (sécurité).
-  3. Déploiement d’un service (Nginx) + site web statique.
+- Controller (C2) : Debian 13.1.0 avec Ansible.
+- Cible : Debian 13.1.0.
+- Utilisateur de service utilisé : `jiji`.
+- Playbooks :
+  - `1-update-os.yml`
+  - `2-create-user.yml`
+  - `3-deploy-website.yml`
 
 L’idée est de passer d’une administration “manuelle” en SSH avec mot de passe à une **administration automatisée** et sécurisée avec Ansible et des clés SSH.
 
 ---
 
-## 2. Phase 0 – Première connexion sans clé SSH
+## 1. Pré‑requis sur la VM cible (Debian)
 
-Au tout début du TP :
+Sur la **cible** (console ou SSH) :
 
-- J’ai 2 VMs Debian 13 en mode **bridge** :
-  - 1 VM contrôleur (C2) avec Ansible installé.
-  - 1 VM cible joignable en IP (ex : `192.168.1.17`).
-- Je me connecte à la VM cible en SSH avec un **mot de passe**, car aucune clé SSH n’est encore configurée.
+```bash
+# 1. Installer le serveur SSH
+sudo apt update
+sudo apt install -y openssh-server
 
-Exemple :
+# 2. Activer et démarrer le service SSH
+sudo systemctl enable ssh
+sudo systemctl start ssh
+sudo systemctl status ssh
+```
+
+Si besoin d’installer `sudo` et donner les droits à `jiji` :
+
+```bash
+su -
+apt install -y sudo
+adduser jiji sudo
+```
+
+Déconnexion / reconnexion en `jiji`, puis vérification :
+
+```bash
+groups          # doit contenir sudo
+sudo whoami     # doit répondre "root"
+```
+
+---
+
+## 2. Installer Ansible sur le controller (C2)
+
+Sur le **controller** :
+
+<img width="1063" height="913" alt="Maj_server" src="https://github.com/user-attachments/assets/8b74d1df-adeb-4d69-8a0f-b1c099120b8c" />
+
+
+```bash
+sudo apt update && sudo apt install -y ansible
+mkdir -p ~/ansible-c2
+cd ~/ansible-c2
+```
+
+---
+
+## 3. Créer l’inventaire `inventory.ini`
+
+```bash
+cd ~/ansible-c2
+nano inventory.ini
+```
+
+Contenu (adapter l’IP à celle de la **cible**) :
+
+<img width="575" height="173" alt="fichier_inventory_ini" src="https://github.com/user-attachments/assets/10a6d87d-859e-4762-965b-c0951c902ce2" />
+
+```ini
+[targets]
+server1 ansible_host=192.168.1.17 ansible_user=jiji
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+```
+
+Vérifier :
+
+<img width="734" height="287" alt="verif_inventaire" src="https://github.com/user-attachments/assets/5e6e5898-0d75-400c-bc27-58819c0b4c2b" />
+
+
+```bash
+ansible-inventory -i inventory.ini --list -y
+```
+
+---
+
+## 4. Phase 0 – Première connexion SSH et acceptation de la clé de la cible
+
+Sur le **controller** :
 
 ```bash
 ssh jiji@192.168.1.17
-# puis saisie du mot de passe de jiji
+# répondre "yes" pour accepter la clé (host key)
+# entrer le mot de passe de jiji
+exit
 ```
 
-Cette première phase me permet de vérifier que la connectivité SSH fonctionne, avant de mettre en place l’authentification par clé.
+Cette première phase permet de vérifier la connectivité SSH avant d’utiliser Ansible.
 
 ---
 
-## 3. Phase 1 – Premier inventory et playbook avec mot de passe
+## 5. Tester la connexion Ansible → cible (mot de passe)
 
-Sur le contrôleur, je crée un premier petit projet Ansible, en utilisant encore le mot de passe pour SSH.
-
-### 3.1. Fichiers de base
-
-Dans un dossier de travail (par exemple `~/ansible-c2`) :
-
-- `inventory.ini` (version mot de passe) :
-
-  ```ini
-  [targets]
-  server1 ansible_host=192.168.1.17 ansible_user=jiji
-  ```
-
-À ce stade, je n’utilise pas encore de clé SSH dans l’inventaire.  
-Quand je lance un playbook, j’utilise l’option `--ask-pass` pour qu’Ansible me demande le mot de passe SSH.
-
-### 3.2. Premier test de connexion
+<img width="805" height="112" alt="test_ping_OK_depuis_C2_cible" src="https://github.com/user-attachments/assets/0cffbbc0-3619-472e-baf6-5bb1e7c9afaa" />
 
 ```bash
-ansible -i inventory.ini targets -m ping --ask-pass
+ansible targets -i inventory.ini -m ping --ask-pass
 ```
 
-Cette commande vérifie qu’Ansible arrive à se connecter en SSH avec le mot de passe et à exécuter le module `ping` sur la cible.
+- `SSH password:` → mot de passe de `jiji`.
+
+Si tout va bien, on obtient un `SUCCESS` avec `"ping": "pong"`.
 
 ---
 
-## 4. Phase 2 – Génération et utilisation d’une clé SSH
+## 6. Playbook 1 : mise à jour OS (`1-update-os.yml`)
 
-Pour ne plus taper le mot de passe à chaque fois et sécuriser les connexions, je passe à une **clé SSH**.
+Créer le playbook :
 
-### 4.1. Génération de la clé sur le C2
+<img width="503" height="247" alt="playbook_OS" src="https://github.com/user-attachments/assets/85b90db3-5ef2-43fb-90db-028c1466c6df" />
 
-Sur le contrôleur (C2), connecté avec mon utilisateur :
-
-```bash
-ssh-keygen -t ed25519 -f ~/.ssh/jiji_key
-```
-
-Je protège la clé avec une passphrase, puis j’utilise `ssh-agent` pour ne pas la retaper à chaque fois :
 
 ```bash
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/jiji_key
+cd ~/ansible-c2
+nano 1-update-os.yml
 ```
 
-### 4.2. Copie de la clé publique sur la cible
+Contenu :
 
-Je copie la clé publique sur la VM cible (initialement encore en mot de passe) :
+```yaml
+***
+- name: Update OS on targets (Debian)
+  hosts: targets
+  become: true
+
+  tasks:
+    - name: Update APT cache and upgrade packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+```
+
+Lancer (au début du TP, avec mot de passe SSH) :
+
+<img width="1081" height="309" alt="Playbook_ansible_Maj_OS" src="https://github.com/user-attachments/assets/4bc21ce5-f1b4-4090-b85a-5eae781f3f0c" />
+
+<img width="713" height="164" alt="explication_Resultat_playbook_OS" src="https://github.com/user-attachments/assets/1f951e06-0a2b-4562-822f-1d0284d1b8c8" />
+
+```bash
+ansible-playbook -i inventory.ini 1-update-os.yml --ask-pass --ask-become-pass
+```
+
+- `SSH password` → mot de passe de `jiji`.
+- `BECOME password` → mot de passe sudo de `jiji` (souvent le même).
+
+**But :** automatiser la gestion des mises à jour système sur la VM cible.
+
+---
+
+## 7. Générer une clé SSH pour Ansible (controller)
+
+Sur le **controller** :
+
+<img width="864" height="410" alt="creation_clé_ssh_C2" src="https://github.com/user-attachments/assets/1d61aeab-1375-4366-b93e-be27427e3200" />
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/jiji_key -C "ansible jiji"
+```
+
+- Clé privée : `~/.ssh/jiji_key`  
+- Clé publique : `~/.ssh/jiji_key.pub`
+
+Copier la clé sur la cible :
+
+<img width="932" height="233" alt="copie_clé_ssh_sur_cible" src="https://github.com/user-attachments/assets/42d3ec91-0eaf-4dd8-afd8-e27022403403" />
 
 ```bash
 ssh-copy-id -i ~/.ssh/jiji_key.pub jiji@192.168.1.17
 ```
 
-Après cette étape, je peux me connecter en SSH sans mot de passe grâce à la clé :
+Tester la connexion avec la clé :
+
+<img width="934" height="231" alt="connexion_sans_mot_passe_cible_ac_passphrase" src="https://github.com/user-attachments/assets/1a355c83-1494-42e8-8922-4962f7aab143" />
 
 ```bash
 ssh -i ~/.ssh/jiji_key jiji@192.168.1.17
 ```
 
-### 4.3. Mise à jour de l’inventaire
+---
 
-Je mets à jour `inventory.ini` pour utiliser la clé :
+## 8. Mettre à jour `inventory.ini` pour utiliser la clé
+
+Modifier `inventory.ini` :
+
+<img width="932" height="186" alt="modif_inventory_ini_avec_clé_ssh" src="https://github.com/user-attachments/assets/63afa475-0e38-4dae-b607-0f00fcbeb1a5" />
 
 ```ini
 [targets]
@@ -111,70 +214,118 @@ server1 ansible_host=192.168.1.17 ansible_user=jiji ansible_ssh_private_key_file
 ansible_python_interpreter=/usr/bin/python3
 ```
 
-Désormais, je n’ai plus besoin de `--ask-pass` pour SSH, seulement éventuellement de `--ask-become-pass` si `sudo` demande un mot de passe.
-
 ---
 
-## 5. Playbook 1 – Mise à jour du système
+## 9. Utiliser ssh-agent pour la clé avec passphrase (sur le C2)
 
-Fichier : `1-update-os.yml`
+<img width="943" height="520" alt="connexion_sans_mot_passe" src="https://github.com/user-attachments/assets/63fcc21f-afcc-4cf5-a10c-0fa1e90ba606" />
 
-Ce playbook :
-
-- Met à jour le cache APT.
-- Fait une mise à niveau des paquets (`upgrade: dist`) sur la cible.
-- Utilise `become: true` pour exécuter les tâches avec les droits admin (équivalent de `sudo`).
-
-Commande d’exécution :
+Si la clé `~/.ssh/jiji_key` a une passphrase, charger la clé dans `ssh-agent` à chaque nouvelle session :
 
 ```bash
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/jiji_key
+```
+
+- `ssh-add` demandera la passphrase de la clé.
+- Tant que la session reste ouverte, SSH et Ansible peuvent utiliser la clé sans redemander la passphrase.
+
+Tester Ansible sans mot de passe SSH :
+
+```bash
+ansible targets -i inventory.ini -m ping
 ansible-playbook -i inventory.ini 1-update-os.yml --ask-become-pass
 ```
 
-**But :** automatiser la gestion des mises à jour système sur la VM cible.
+À ce stade :
+- Authentification SSH par **clé** (plus besoin de `--ask-pass`).
+- `--ask-become-pass` reste nécessaire pour le mot de passe sudo (BECOME password).
 
 ---
 
-## 6. Playbook 2 – Utilisateur jiji + SSH durci
+## 10. Playbook 2 : création user + clé SSH + durcissement SSH (`2-create-user.yml`)
 
-Fichier : `2-create-user.yml`
+Ce playbook permet de gérer complètement l’utilisateur de service et la configuration SSH via Ansible.
 
-Ce playbook automatise la partie comptes et sécurité SSH :
+Créer le fichier :
 
-- Vérifie ou crée l’utilisateur **`jiji`** avec :
-  - un home,
-  - le shell `/bin/bash`,
-  - l’appartenance au groupe `sudo`.
-- Ajoute la clé publique SSH générée sur le C2 dans `~jiji/.ssh/authorized_keys`.
-- Durcit la configuration SSH :
-  - `PermitRootLogin prohibit-password`,
-  - `PasswordAuthentication no`.
-- Redémarre le service SSH pour appliquer la configuration.
+<img width="955" height="825" alt="playbook2_creation_user_sudo avec_ansible" src="https://github.com/user-attachments/assets/06925a80-e9c8-4fb5-a9fd-2aec0ad220c6" />
 
-Commande :
+
+```bash
+cd ~/ansible-c2
+nano 2-create-user.yml
+```
+
+Contenu :
+
+```yaml
+***
+- name: Create service user jiji with SSH key (Debian)
+  hosts: targets
+  become: true
+
+  tasks:
+    - name: Create user jiji with sudo
+      user:
+        name: jiji
+        groups: sudo
+        append: true
+        create_home: true
+        shell: /bin/bash
+
+    - name: Add SSH public key for jiji
+      ansible.posix.authorized_key:
+        user: jiji
+        state: present
+        key: "{{ lookup('file', '~/.ssh/jiji_key.pub') }}"
+
+    - name: Disable root SSH password login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin prohibit-password'
+        state: present
+
+    - name: Disable password authentication (only keys)
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Restart SSH service
+      service:
+        name: ssh
+        state: restarted
+```
+
+Lancer :
+
+<img width="936" height="841" alt="playbook2_resultats" src="https://github.com/user-attachments/assets/50aece24-cf3d-4ee7-9692-97695eafda21" />
 
 ```bash
 ansible-playbook -i inventory.ini 2-create-user.yml --ask-become-pass
 ```
 
-**But :** ne plus gérer la machine en root ou par mot de passe, mais via un utilisateur dédié (`jiji`) et une clé SSH, avec un SSHd durci.
+**But :** ne plus gérer la machine en root ou par mot de passe, mais via un utilisateur dédié (`jiji`) et une clé SSH, avec un serveur SSH durci.
 
 ---
 
-## 7. Playbook 3 – Nginx + site web statique
+## 11. Playbook 3 : Nginx + page web (`3-deploy-website.yml`)
 
-Fichier : `3-deploy-website.yml`
+### 11.1. Préparer la page sur le controller
 
-### 7.1. Préparation de la page sur le C2
-
-Sur le contrôleur, je prépare le dossier et la page :
+Créer le dossier `site` puis le fichier `index.html` :
 
 ```bash
-mkdir -p site
-nano site/index.html
+mkdir -p ~/ansible-c2/site
+nano ~/ansible-c2/site/index.html
 ```
 
-Exemple de contenu :
+Exemple de contenu HTML simple :
+
+<img width="749" height="293" alt="page_index_html" src="https://github.com/user-attachments/assets/724f2059-e595-447a-b367-f243d5c13291" />
 
 ```html
 <!DOCTYPE html>
@@ -185,39 +336,139 @@ Exemple de contenu :
 </head>
 <body>
   <h1>TP Ansible - Déploiement Nginx</h1>
-  <p>Bonjour les Amis, Vive Ansible.</p>
+  <p>Ceci est ma première page déployée automatiquement avec Ansible.</p>
 </body>
 </html>
 ```
 
-### 7.2. Rôle du playbook
+### 11.2. Créer le playbook
 
-Le playbook :
+<img width="811" height="630" alt="creation_playbook3_nginx" src="https://github.com/user-attachments/assets/cc4649bb-de0a-490d-8d19-29590ff75780" />
 
-- Installe **Nginx** sur la cible (module `apt`).
-- Copie `site/index.html` vers `/var/www/html/index.html` (module `copy`).
-- S’assure que Nginx est démarré et activé au boot (module `service`).
+```bash
+cd ~/ansible-c2
+nano 3-deploy-website.yml
+```
 
-Commande :
+Contenu :
+
+```yaml
+***
+- name: Deploy Nginx and static website (Debian)
+  hosts: targets
+  become: true
+
+  vars:
+    web_root: /var/www/html
+
+  tasks:
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Copy index.html to web root
+      copy:
+        src: site/index.html
+        dest: "{{ web_root }}/index.html"
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Ensure Nginx is enabled and running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+```
+
+### 11.3. Lancer le playbook et vérifier
+
+Lancer le playbook :
 
 ```bash
 ansible-playbook -i inventory.ini 3-deploy-website.yml --ask-become-pass
 ```
 
-Test depuis le C2 ou un navigateur :
+Installer `curl` sur le C2 si besoin :
+
+```bash
+sudo apt update
+sudo apt install -y curl
+```
+
+Vérifier l’affichage de la page web :
+
+<img width="708" height="255" alt="affiche_site_web_depuis_c2" src="https://github.com/user-attachments/assets/798ba63d-0be0-4863-ab3d-bf808a2e82cc" />
 
 ```bash
 curl http://192.168.1.17
 ```
 
-**But :** déployer automatiquement un serveur web et un site statique à partir du contrôleur.
+---
+
+## 12. Résumé et notions importantes
+
+### 12.1. SSH / Authentification
+
+- Sur la cible :
+  - `openssh-server` installé.
+  - `sudo` installé.
+  - `jiji` dans le groupe `sudo`.
+- Clé SSH ED25519 `jiji_key` avec passphrase, copiée sur la cible.
+- Sur le C2 :
+  - `ssh-agent` + `ssh-add ~/.ssh/jiji_key` pour utiliser la clé sans retaper la passphrase.
+
+### 12.2. Inventaire final
+
+```ini
+[targets]
+server1 ansible_host=192.168.1.17 ansible_user=jiji ansible_ssh_private_key_file=~/.ssh/jiji_key
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+```
+
+### 12.3. Commandes clés
+
+```bash
+# Test ping
+ansible targets -i inventory.ini -m ping
+
+# Update OS
+ansible-playbook -i inventory.ini 1-update-os.yml --ask-become-pass
+
+# Création user + durcissement SSH
+ansible-playbook -i inventory.ini 2-create-user.yml --ask-become-pass
+
+# Déploiement site
+ansible-playbook -i inventory.ini 3-deploy-website.yml --ask-become-pass
+```
+
+### 12.4. Idempotence
+
+- Si je relance `1-update-os.yml`, la machine est déjà à jour, donc peu ou pas de changements.
+- Si je relance `2-create-user.yml`, `jiji` existe déjà, la clé SSH est en place, SSH est déjà durci, les tâches passent en `ok` sans casser la configuration.
+- Si je relance `3-deploy-website.yml`, Nginx est déjà installé, `index.html` est recopié si je l’ai modifié côté controller.
+
+Ansible décrit un **état cible** et remet la machine dans cet état à chaque exécution, de façon répétable.
 
 ---
 
-## 8. Idempotence et rejouer les playbooks
+## 13. Ce que ce TP m’a appris
 
-- Si je relance `1-update-os.yml`, la machine est déjà à jour, donc il y a peu ou pas de changements.
-- Si je relance `2-create-user.yml`, `jiji` existe déjà, la clé SSH est en place, SSH est déjà durci, les tâches passent en `ok` sans casser la configuration.
-- Si je relance `3-deploy-website.yml`, Nginx est déjà installé, `index.html` est recopié si je l’ai modifié côté contrôleur.
+- Installer et configurer un **controller Ansible** et une cible Debian.
+- Créer et utiliser un **inventaire** Ansible.
+- Distinguer :
+  - l’authentification SSH (mot de passe → clé),
+  - et l’élévation de privilèges (`become` / `sudo`).
+- Générer et utiliser une **clé SSH protégée par passphrase** avec `ssh-agent`.
+- Automatiser :
+  - les mises à jour système,
+  - la gestion des utilisateurs et des droits `sudo`,
+  - la configuration SSH (durcissement),
+  - l’installation et la configuration d’un service (Nginx),
+  - le déploiement d’un site statique.
 
-L’idée est qu’Ansible décrit un état cible et remet la machine dans cet état à chaque exécution, de façon répétable.
+Ce TP est mon **premier pas sérieux avec Ansible** et l’automatisation d’infrastructures dans le cadre de la formation AIS (Simplon).
