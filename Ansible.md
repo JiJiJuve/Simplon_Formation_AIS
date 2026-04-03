@@ -473,10 +473,7 @@ Ansible décrit un **état cible** et remet la machine dans cet état à chaque 
 
 Ce TP est mon **premier pas sérieux avec Ansible** et l’automatisation d’infrastructures dans le cadre de la formation AIS (Simplon).
 
-Parfait, on ajoute une **section bonus Vault** à la fin de ton README détaillé, sans casser ce que tu as déjà.
-
-Tu peux coller ce bloc **après la section 13** (“Ce que ce TP m’a appris”) de ton README actuel.
-
+**section bonus Vault** 
 
 ---
 
@@ -550,7 +547,6 @@ Dans ce mode :
 Sur ce TP simple, Vault n’est pas indispensable, mais il devient très utile quand :
 
 - On commence à gérer plusieurs serveurs de production avec des mots de passe différents.
-- On veut **committer le code Ansible sur Git** sans exposer de secrets.
 - On doit stocker d’autres informations sensibles : mots de passe de bases de données, tokens API, etc.
 
 Cette section me permet surtout de montrer que je sais :
