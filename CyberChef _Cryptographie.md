@@ -46,7 +46,7 @@ Dans **CyberChef**, utilisez la recette **ROT13**.
    - Quel est le texte chiffré ?  
    - Déchiffrez ce texte pour vérifier le résultat
 
-<img width="901" height="539" alt="Chiffrement_Cesar_ROT13" src="https://github.com/user-attachments/assets/1028d724-ac67-4c5f-9c2f-22b3a48a36ca" />
+![Chiffrement César ROT13](https://github.com/user-attachments/assets/eb7acf0e-7884-460c-9a82-b5e5ef124624)
 
 
 
