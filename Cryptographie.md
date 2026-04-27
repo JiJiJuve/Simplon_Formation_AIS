@@ -242,6 +242,12 @@ Utilsation de TOBase64
 
 <img width="1640" height="66" alt="flag_doc_Yanis_Crypto" src="https://github.com/user-attachments/assets/2c82cb81-d9b7-4255-825e-0f1c012ff28b" />
 
+<img width="357" height="147" alt="flag_doc_Yanis_Crypto2" src="https://github.com/user-attachments/assets/499a02ff-4a84-4178-836e-bc62ea92d814" />
+
+<img width="1543" height="620" alt="flag_doc_Yanis_Crypto3" src="https://github.com/user-attachments/assets/fb218c7d-fe07-4a6b-b598-12ab6c127cb9" />
+
+
+
 
 ***
 
