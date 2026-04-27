@@ -46,7 +46,8 @@ Dans **CyberChef**, utilisez la recette **ROT13**.
    - Quel est le texte chiffré ?  
    - Déchiffrez ce texte pour vérifier le résultat
 
-<img width="901" height="539" alt="Chiffrement_Cesar_ROT13" src="https://github.com/user-attachments/assets/77dbd71d-d380-44c3-b1d2-94d5a7e536d5" />
+<img width="901" height="539" alt="Chiffrement_Cesar_ROT13" src="https://github.com/user-attachments/assets/1028d724-ac67-4c5f-9c2f-22b3a48a36ca" />
+
 
 
 2. Chiffrer le nom de votre film préféré avec une *Box Height* de votre choix  
