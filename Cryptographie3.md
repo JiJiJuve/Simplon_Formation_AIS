@@ -1,13 +1,3 @@
-Voici une version **unique, propre et complète** de ton TP, avec :
-
-- Ton cas réel Windows → Ubuntu.  
-- La variante `ssh-copy-id` depuis Linux (mise en opposition).  
-- Les explications sur la conf `sshd_config` et le fonctionnement.  
-
-Tu peux la coller telle quelle dans ton README.
-
-***
-
 # TP3 – Authentification par clé SSH (Client Windows 11 → Serveur Ubuntu VM)
 
 ## Sommaire
@@ -33,7 +23,7 @@ Tu peux la coller telle quelle dans ton README.
 - Déployer la clé publique sur un serveur **Ubuntu** virtualisé (VM).  
 - Forcer l’authentification par clé sur le serveur Ubuntu.  
 - Comprendre et utiliser `ssh-agent` sous Windows pour ne pas retaper la passphrase en boucle.  
-- Connaître la méthode équivalente depuis un **client Linux** (`ssh-copy-id`). [ubuntu](https://ubuntu.com/tutorials/ssh-keygen-on-windows)
+- Connaître la méthode équivalente depuis un **client Linux** (`ssh-copy-id`). 
 
 ***
 
@@ -47,7 +37,10 @@ Sur Windows 11, le client OpenSSH est intégré par défaut. Tu peux vérifier d
 ssh -V
 ```
 
-La clé sera stockée dans le dossier `C:\Users\<ton_user>\.ssh`. [ubuntu](https://ubuntu.com/tutorials/ssh-keygen-on-windows)
+<img width="382" height="69" alt="verif_client_ssh_windows11" src="https://github.com/user-attachments/assets/1c9beac9-1117-41de-820c-bb7bd3db13bf" />
+
+
+La clé sera stockée dans le dossier `C:\Users\<ton_user>\.ssh`. 
 
 ### 2. Commande utilisée
 
@@ -57,10 +50,12 @@ Dans **PowerShell** (ou Windows Terminal) en tant qu’utilisateur normal :
 ssh-keygen -t rsa -b 4096 -f $env:USERPROFILE\.ssh\id_rsa
 ```
 
+<img width="732" height="379" alt="Generer_paire_key_RSA" src="https://github.com/user-attachments/assets/0231c224-ee08-420f-abc7-ad34a47043b5" />
+
 - Cela crée :
   - `C:\Users\<user>\.ssh\id_rsa` → clé **privée** (à ne jamais partager).  
   - `C:\Users\<user>\.ssh\id_rsa.pub` → clé **publique** (à copier sur le serveur Ubuntu).  
-- Tu peux laisser le nom par défaut et définir une **passphrase** pour protéger la clé. [learn.microsoft](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_keymanagement)
+- Tu peux laisser le nom par défaut et définir une **passphrase** pour protéger la clé.
 
 ### 3. Vérification des fichiers générés
 
@@ -97,8 +92,17 @@ PS C:\Users\JiJi\.ssh> type $env:USERPROFILE\.ssh\id_rsa
 -----END OPENSSH PRIVATE KEY-----
 ```
 
-> Remarque : la clé privée `id_rsa` ne doit jamais être publiée ni envoyée à quelqu’un. [concurrency](https://concurrency.com/blog/key-based-authentication-for-openssh-on-windows/)
+<img width="618" height="285" alt="Verif_paire_key_RSA" src="https://github.com/user-attachments/assets/5ce38c46-cc9f-40e0-87a6-948df38da4b4" />
 
+<BVR><BVR>
+
+<img width="1894" height="138" alt="key_public" src="https://github.com/user-attachments/assets/af019a41-242d-41f1-9f21-1b9c4b5f8839" />
+
+<BVR><BVR>
+
+<img width="635" height="513" alt="key_privée" src="https://github.com/user-attachments/assets/1394efdc-636c-4110-aabf-ed981f514027" />
+
+> Remarque : la clé privée `id_rsa` ne doit jamais être publiée ni envoyée à quelqu’un.
 ***
 
 ## II. Préparation du serveur Ubuntu (activer SSH)
@@ -139,7 +143,14 @@ sudo systemctl enable --now ssh
 sudo systemctl status ssh
 ```
 
-Le service doit être `active (running)`. [digitalocean](https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-22-04)
+Le service doit être `active (running)`.
+
+<img width="1134" height="668" alt="Installation_ssh_server" src="https://github.com/user-attachments/assets/eb97c1ee-5206-482a-b33b-ba26f5f4903a" />
+
+<BVR><BVR>
+
+<img width="1165" height="554" alt="Activation_demarrage_verif_ssh" src="https://github.com/user-attachments/assets/fe62b579-6563-41e7-83bd-71732d417718" />
+
 
 ### 3. Premier test de connexion depuis Windows (avec mot de passe)
 
@@ -162,6 +173,8 @@ Welcome to Ubuntu 24.04.4 LTS ...
 
 À ce stade, la connexion utilise encore le **mot de passe** de `jiji`.
 
+<img width="740" height="573" alt="1iere_Connexion_SSH_avec_MotPass" src="https://github.com/user-attachments/assets/cc0a8498-a960-448c-bfda-8947132877ad" />
+
 ***
 
 ## III. Dépôt de la clé publique sur le serveur Ubuntu
@@ -176,7 +189,10 @@ Dans PowerShell :
 type $env:USERPROFILE\.ssh\id_rsa.pub
 ```
 
-Copier **toute la ligne** qui commence par `ssh-rsa` et se termine par `jiji@JiJi`. [reddit](https://www.reddit.com/r/linuxadmin/comments/1j0ziba/ssh_keys_between_windows_10_and_linux/)
+Copier **toute la ligne** qui commence par `ssh-rsa` et se termine par `jiji@JiJi`.
+
+<img width="1894" height="138" alt="key_public" src="https://github.com/user-attachments/assets/8d46d0c2-89c2-47b5-8de3-4bbb4b683729" />
+
 
 #### 2. Se connecter à la VM (avec mot de passe une dernière fois)
 
@@ -211,6 +227,9 @@ chmod 600 ~/.ssh/authorized_keys
 ```
 
 La clé publique du client Windows est maintenant autorisée pour l’utilisateur `jiji` sur le serveur Ubuntu. [digitalocean](https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-22-04)
+
+<img width="1141" height="875" alt="changer_passwordNO_PubkeyAuthenticationYES" src="https://github.com/user-attachments/assets/f1eaf3a8-5c98-42ad-82c4-9b1d5b17bc36" />
+
 
 ***
 
@@ -268,7 +287,10 @@ Subsystem       sftp    /usr/lib/openssh/sftp-server
 - `PasswordAuthentication no` désactive le mot de passe classique.  
 - `KbdInteractiveAuthentication no` évite d’autres prompts interactifs liés au mot de passe.  
 - `UsePAM yes` laisse PAM actif pour d’autres mécanismes si besoin.  
-- `AcceptEnv` et `Subsystem sftp` sont les valeurs par défaut d’Ubuntu. [docs.rackspace](https://docs.rackspace.com/docs/enable-ssh-public-key-authentication)
+- `AcceptEnv` et `Subsystem sftp` sont les valeurs par défaut d’Ubuntu. 
+
+<img width="1141" height="875" alt="changer_passwordNO_PubkeyAuthenticationYES" src="https://github.com/user-attachments/assets/a0f8c4ec-8dc3-48a0-8920-84558cf91673" />
+
 
 Sauvegarder puis redémarrer le service :
 
@@ -294,6 +316,9 @@ La connexion doit se faire :
 
 - soit directement, si la clé n’a pas de passphrase,  
 - soit en demandant la **passphrase de la clé** (et non plus le mot de passe Linux).
+
+<img width="762" height="347" alt="Connexion_ssh_avec_key" src="https://github.com/user-attachments/assets/078ad8e4-38be-40e4-b73b-8c9fa5c23d17" />
+
 
 Exemple en mode verbeux :
 
@@ -382,6 +407,9 @@ ssh jiji@10.225.123.61
 ```
 
 La passphrase de la clé ne sera plus redemandée tant que `ssh-agent` tourne.
+
+<img width="1115" height="745" alt="Installation_Agent_ssh_connexion_sans_passphrase" src="https://github.com/user-attachments/assets/10b19348-a949-45ab-b298-e988387237da" />
+
 
 ### 3. Alternatives (PuTTY / MobaXterm)
 
