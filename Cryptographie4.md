@@ -29,7 +29,7 @@ which john
 ls /usr/share/john
 ```
 
-- `john` est l’outil principal de cassage.  
+- `john` est l’outil principal de Decryptage.  
 - `/usr/share/john` contient des scripts comme `ssh2john.py`.
 
 ### 0.2. Préparer la wordlist `rockyou.txt`
