@@ -439,5 +439,3 @@ john --wordlist=/home/jiji/rockyou.txt [fichier_hash]
 ```bash
 john --show [fichier_hash]
 ```
-
-Ce README couvre toute la logique du TP et peut servir de base de référence pour d’autres labs de cracking de mots de passe.
