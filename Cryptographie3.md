@@ -1,154 +1,253 @@
-# TP3 – Authentification par clé SSH
-
+# TP3 – Authentification par clé SSH (Client Windows 11 → Serveur Ubuntu VM)
 
 ## Objectifs
 
-- Générer une paire de clés SSH (publique/privée).
-- Transférer la clé publique sur un serveur distant Linux.
-- Forcer l’authentification par clé sur le serveurns Linux.
-- Comprendre le rôle de `ssh-agent` sous Windows.
+- Générer une paire de clés SSH (publique/privée) sur un poste **Windows 11**.  
+- Installer/ utiliser le client SSH natif ou un terminal (PowerShell, Windows Terminal).  
+- Déployer la clé publique sur un serveur **Ubuntu** virtualisé (VM).  
+- Forcer l’authentification par clé sur le serveur Ubuntu.  
+- Comprendre et utiliser `ssh-agent` sous Windows pour ne pas retaper la passphrase en boucle.
 
----
+***
 
-## I. Génération de la clé SSH
+## I. Génération de la clé SSH (Windows 11 → `id_rsa`)
 
-### 1. Commande utilisée
+### 1. Prérequis côté Windows 11
 
-Sur le poste client (Windows/Linux), j’ai généré une paire de clés RSA 4096 avec :
+Sur Windows 11, le client SSH est intégré par défaut. Tu peux vérifier dans PowerShell :
 
-```bash
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
+```powershell
+ssh -V
 ```
 
-- `~/.ssh/id_rsa` : clé privée (à ne jamais partager).
-- `~/.ssh/id_rsa.pub` : clé publique, à copier sur le serveur.
+La clé sera stockée dans le dossier `C:\Users\<ton_user>\.ssh`.
 
----
+### 2. Commande utilisée
 
-## II. Dépôt de la clé publique sur le serveur distant
+Dans **PowerShell** (ou Windows Terminal) en tant qu’utilisateur normal :
 
-### 1. Méthode avec `ssh-copy-id`
-
-J’ai copié la clé publique sur le serveur avec la commande suivante :
-
-```bash
-ssh-copy-id -i ~/.ssh/id_rsa.pub utilisateur@serveur
+```powershell
+ssh-keygen -t rsa -b 4096 -f $env:USERPROFILE\.ssh\id_rsa
 ```
 
-Cette commande crée automatiquement le dossier `~/.ssh` sur le serveur, ajoute la clé dans `authorized_keys` et ajuste les permissions.
+- Cela crée :
+  - `C:\Users\<user>\.ssh\id_rsa` → clé privée (à ne jamais partager).
+  - `C:\Users\<user>\.ssh\id_rsa.pub` → clé publique (à copier sur le serveur Ubuntu).
+- Tu peux laisser le nom par défaut et définir une **passphrase** pour protéger la clé.
 
-### 2. Méthode manuelle (alternative)
+***
 
-Si on le fait manuellement sur le serveur :
+## II. Dépôt de la clé publique sur le serveur Ubuntu (VM)
+
+Supposons que ton serveur Ubuntu tourne en VM (VirtualBox, VMware, etc.) et qu’il est joignable en SSH sur :
+
+```text
+utilisateur = ubuntu
+adresse IP = 192.168.X.Y    (IP de la VM)
+```
+
+### 1. Méthode recommandée : `ssh-copy-id` depuis Windows
+
+Sous Windows 11 récent, `ssh-copy-id` n’est pas fourni par défaut. Tu as deux options :
+
+- Soit tu disposes d’un environnement type WSL/Kali/MobaXterm qui inclut `ssh-copy-id`.  
+- Soit tu fais la méthode **manuelle** (voir §2).
+
+Si tu as un shell qui propose `ssh-copy-id`, la commande serait :
+
+```bash
+ssh-copy-id -i ~/.ssh/id_rsa.pub ubuntu@192.168.X.Y
+```
+
+Cette commande :
+
+- Crée `~/.ssh` sur la VM si besoin.
+- Ajoute la clé dans `~/.ssh/authorized_keys`.
+- Met les bonnes permissions.
+
+### 2. Méthode manuelle (adaptée à ton TP)
+
+Depuis Windows, affiche ta clé publique :
+
+```powershell
+type $env:USERPROFILE\.ssh\id_rsa.pub
+```
+
+Copie le contenu affiché.
+
+Sur le serveur Ubuntu (connexion initiale **avec mot de passe**, une seule fois) :
+
+```bash
+ssh ubuntu@192.168.X.Y
+```
+
+Puis, sur la VM Ubuntu :
 
 ```bash
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
-cat id_rsa.pub >> ~/.ssh/authorized_keys
+
+# Éditer le fichier authorized_keys
+nano ~/.ssh/authorized_keys
+# Coller la ligne de ta clé publique Windows (id_rsa.pub)
+# Enregistrer et quitter
+
 chmod 600 ~/.ssh/authorized_keys
 ```
 
----
+La clé publique du client Windows est maintenant autorisée sur le serveur Ubuntu.
 
-## III. Configuration du serveur pour forcer l’authentification par clé
+***
 
-Sur le serveur Linux, j’ai édité le fichier `/etc/ssh/sshd_config` :
+## III. Configuration du serveur Ubuntu pour forcer l’authentification par clé
+
+Sur la VM Ubuntu, édite la configuration SSH :
 
 ```bash
 sudo nano /etc/ssh/sshd_config
 ```
 
-J’ai modifié (ou vérifié) les lignes suivantes :
+Vérifie ou modifie les lignes suivantes :
 
 ```text
 PubkeyAuthentication yes
 PasswordAuthentication no
 ```
 
-Ensuite, j’ai redémarré le service SSH :
+Enregistre, puis redémarre le service SSH :
 
 ```bash
 sudo systemctl restart ssh
 ```
 
-Le serveur ne permet plus la connexion par mot de passe et exige une authentification par clé.
+À partir de ce moment :
 
----
+- Le serveur **accepte** l’authentification par clé publique.
+- L’authentification par mot de passe est **désactivée** (tu ne peux plus te connecter juste avec le mot de passe système).
 
-## IV. Validation du fonctionnement
+***
 
-### 1. Test de connexion
+## IV. Validation du fonctionnement (Windows 11 → Ubuntu VM)
 
-Depuis le client, j’ai testé la connexion :
+### 1. Test de connexion depuis Windows
 
-```bash
-ssh utilisateur@serveur
-```
-
-La connexion s’est établie **sans mot de passe**, uniquement à l’aide de la clé privée, ce qui confirme que la configuration est correcte.
-
-### 2. Réponses aux questions
-
-- **Que se passe-t-il si l’on supprime la clé privée sur le client ?**  
-  La connexion par clé ne fonctionne plus, car on ne possède plus la clé privée pour prouver l’identité. Si `PasswordAuthentication` est resté désactivé, la connexion est impossible jusqu’à remise en place de la clé privée ou réactivation d’une autre méthode.
-
-- **Comment réactiver l’authentification par mot de passe en cas de besoin ?**  
-  Sur le serveur, il faut modifier `/etc/ssh/sshd_config` :
-
-  ```text
-  PasswordAuthentication yes
-  ```
-
-  Puis redémarrer le service SSH :
-
-  ```bash
-  sudo systemctl restart ssh
-  ```
-
----
-
-## V. Bonus : Activation et utilisation de ssh-agent
-
-### 1. Rôle de ssh-agent
-
-`ssh-agent` est un service qui garde la clé privée en mémoire (après déverrouillage avec la phrase de passe) afin de ne pas avoir à la saisir à chaque nouvelle connexion SSH. Il permet un usage plus pratique et sécurisé des clés SSH, surtout dans des environnements avec de nombreuses connexions ou scripts.
-
-### 2. Sur Windows (client SSH natif)
-
-J’ai activé et utilisé `ssh-agent` comme suit :
+Toujours dans PowerShell :
 
 ```powershell
-# Activer le service
+ssh ubuntu@192.168.X.Y
+```
+
+- Si `ssh-agent` n’est pas utilisé et que ta clé est protégée par une passphrase, on te la demandera une fois.
+- Si tout est correct, la connexion se fait **sans** demander le mot de passe de l’utilisateur Linux (ubuntu), uniquement grâce à la clé.
+
+### 2. Questions fréquentes (comportements à connaître)
+
+**Que se passe-t-il si je supprime la clé privée sur Windows (`id_rsa`) ?**
+
+- Tu perds la capacité de prouver que tu es le propriétaire de la clé publique installée sur le serveur.
+- Comme `PasswordAuthentication no`, tu ne peux plus te connecter du tout via SSH depuis cette machine, sauf si :
+  - tu remets une copie de la clé privée,
+  - ou tu réactives temporairement le mot de passe dans `sshd_config` depuis la console de la VM (ou un autre accès).
+
+**Comment réactiver l’authentification par mot de passe en cas de problème ?**
+
+Sur la VM Ubuntu, depuis une console locale :
+
+```bash
+sudo nano /etc/ssh/sshd_config
+```
+
+Remets :
+
+```text
+PasswordAuthentication yes
+```
+
+Puis :
+
+```bash
+sudo systemctl restart ssh
+```
+
+Tu pourras à nouveau te connecter par mot de passe.
+
+***
+
+## V. Bonus : Utilisation de `ssh-agent` sur Windows 11
+
+### 1. Rôle de `ssh-agent`
+
+`ssh-agent` est un service qui garde ta clé privée **déverrouillée en mémoire** après que tu as saisi la passphrase une première fois.  
+Cela évite de retaper la passphrase à chaque nouvelle connexion SSH, tout en gardant la clé protégée.
+
+### 2. Activer et utiliser `ssh-agent` (client SSH natif Windows)
+
+Dans PowerShell en administrateur :
+
+```powershell
+# Activer le service au démarrage
 Get-Service ssh-agent | Set-Service -StartupType Automatic
 
-# Démarrer le service
+# Démarrer le service maintenant
 Start-Service ssh-agent
+```
 
-# Charger ma clé privée
+Puis, en tant qu’utilisateur :
+
+```powershell
+# Ajouter ta clé dans l'agent
 ssh-add $env:USERPROFILE\.ssh\id_rsa
 ```
 
-Après cela, les connexions SSH ne demandent plus la phrase de passe tant que `ssh-agent` est en fonction.
+Tu entres une fois la passphrase. Ensuite :
 
-### 3. Sur PuTTY
+```powershell
+ssh ubuntu@192.168.X.Y
+```
 
-L’équivalent de `ssh-agent` sous Windows pour PuTTY est **Pageant** :
+- La passphrase ne sera plus redemandée tant que `ssh-agent` tourne et que ta session est active.
 
-- Lancer Pageant.
-- Charger la clé privée (format PuTTY `.ppk`).
-- Configurer PuTTY pour utiliser cette session ; la clé sera utilisée automatiquement sans redemander la phrase de passe.
+### 3. Si tu utilises PuTTY / Pageant (optionnel)
 
-### 4. Sur MobaXterm
+Si tu préfères PuTTY :
 
-MobaXterm intègre un agent SSH. Il suffit de :
+- Convertis ta clé OpenSSH en `.ppk` avec PuTTYgen.  
+- Lance **Pageant** et charge ta clé `.ppk`.  
+- Configure PuTTY pour utiliser cette clé ; les connexions se feront sans redemander la passphrase à chaque fois (Pageant joue le rôle d’agent).
 
-- Charger la clé privée dans l’agent SSH de MobaXterm.
-- Établir une session SSH normale ; MobaXterm utilise alors la clé stockée dans l’agent, ce qui évite de retaper la phrase de passe à chaque connexion.
+### 4. Si tu utilises MobaXterm (optionnel)
 
----
+MobaXterm possède un agent SSH intégré :
+
+- Charge ta clé privée dans l’agent SSH de MobaXterm.  
+- Utilise une session SSH classique vers `ubuntu@192.168.X.Y`.  
+- La clé stockée dans l’agent sera utilisée automatiquement pour l’authentification.
+
+***
+
+## VI. Résumé du workflow (Windows 11 → Ubuntu VM)
+
+1. **Sur Windows 11 :**
+   - Générer une paire de clés : `ssh-keygen -t rsa -b 4096`.
+   - Stocker la clé dans `C:\Users\<user>\.ssh\`.
+
+2. **Sur Ubuntu VM :**
+   - Copier la clé publique dans `~/.ssh/authorized_keys`.
+   - Configurer `/etc/ssh/sshd_config` avec `PubkeyAuthentication yes` et `PasswordAuthentication no`.
+   - Redémarrer le service SSH.
+
+3. **Sur Windows 11 :**
+   - Optionnel : activer `ssh-agent` et ajouter la clé avec `ssh-add`.
+   - Tester : `ssh ubuntu@192.168.X.Y`.
+
+***
 
 ## Conclusion
 
-Ce TP permet de comprendre et mettre en œuvre l’authentification par clé SSH sur un serveur Linux, de sécuriser le serveur en désactivant le mot de passe et d’optimiser l’usage avec `ssh-agent`, notamment sous Windows. Les mêmes principes s’appliquent pour de nombreux services (Git, déploiement, tunnel, etc.).
-```
+Avec ce TP, tu as :
 
+- Mis en place une authentification par clé SSH entre un **client Windows 11** et un **serveur Ubuntu en VM**.  
+- Sécurisé l’accès en désactivant l’authentification par mot de passe.  
+- Vu comment `ssh-agent` améliore le confort d’utilisation des clés, tout en gardant un bon niveau de sécurité.
+
+Ce modèle est directement réutilisable en entreprise pour les accès à des serveurs Linux via SSH, mais aussi pour Git (GitHub, GitLab), des déploiements automatisés, des tunnels SSH, etc.
