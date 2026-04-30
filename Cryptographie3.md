@@ -48,6 +48,43 @@ ssh-keygen -t rsa -b 4096 -f $env:USERPROFILE\.ssh\id_rsa
   - `C:\Users\<user>\.ssh\id_rsa.pub` → clé **publique** (à copier sur le serveur Ubuntu).
 - Tu peux laisser le nom par défaut et définir une **passphrase** pour protéger la clé.
 
+### 3. Vérification des fichiers générés
+
+Après la génération, je vérifie la présence des clés dans mon dossier `.ssh` :
+
+```powershell
+PS C:\WINDOWS\system32> cd $env:USERPROFILE\.ssh
+PS C:\Users\JiJi\.ssh> ls
+
+
+    Répertoire : C:\Users\JiJi\.ssh
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        30/04/2026     10:52           3414 id_rsa
+-a----        30/04/2026     10:52            736 id_rsa.pub
+-a----        20/03/2026     10:18           2494 known_hosts
+-a----        18/03/2026     19:50           2110 known_hosts.old
+```
+
+Je peux afficher le contenu de la clé **publique** (celle que je vais copier sur le serveur Ubuntu) :
+
+```powershell
+PS C:\Users\JiJi\.ssh> type $env:USERPROFILE\.ssh\id_rsa.pub
+ssh-rsa AAAA[...]Q== jiji@JiJi
+```
+
+Et vérifier que la clé **privée** existe bien (sans la partager) :
+
+```powershell
+PS C:\Users\JiJi\.ssh> type $env:USERPROFILE\.ssh\id_rsa
+-----BEGIN OPENSSH PRIVATE KEY-----
+[contenu masqué volontairement]
+-----END OPENSSH PRIVATE KEY-----
+```
+
+> Remarque : la clé privée `id_rsa` ne doit jamais être publiée telle quelle dans un dépôt GitHub ou partagée avec quelqu’un.
+
 ***
 
 ## II. Dépôt de la clé publique sur le serveur Ubuntu (VM)
