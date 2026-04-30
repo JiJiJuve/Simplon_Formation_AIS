@@ -167,7 +167,7 @@ openssl rsa -in ma_cle_privee.pem -pubout -out ma_cle_publique.pem
 <img width="755" height="800" alt="key_privee_publique" src="https://github.com/user-attachments/assets/c2545533-1611-435d-990f-ba58f05a1eb9" />
 
   
-<img width="652" height="790" alt="key_privee_publique2" src="https://github.com/user-attachments/assets/bc469ae8-16ef-4497-ac55-c37655602343" />
+<img width="652" height="790" alt="key_privee_publique2" src="https://github.com/user-attachments/assets/f05b047a-bf30-4f48-aae3-45bb81e1471c" />
 
 
 ### B. J’envoie “Maldives” → Hicham
